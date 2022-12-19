@@ -37,6 +37,13 @@ func ApiAsk(c *gin.Context) {
 		}
 	}
 	connectionPool.Mu.RUnlock()
+	// Do not send request if connection currently has a request
+	if connection.LastMessageTime.After(connection.Heartbeat) {
+		c.JSON(503, gin.H{
+			"error": "No available clients",
+		})
+		return
+	}
 	// Send request to the client
 	err = connection.Ws.WriteJSON(request)
 	if err != nil {
@@ -63,6 +70,8 @@ func ApiAsk(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"response": response,
 			})
+			// Heartbeat
+			connection.Heartbeat = time.Now()
 			return
 		}
 		select {
