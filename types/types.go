@@ -24,7 +24,6 @@ type ChatGptRequest struct {
 	MessageId      string `json:"message_id"`
 	ConversationId string `json:"conversation_id"`
 	ParentId       string `json:"parent_id"`
-	ConnectionId   string `json:"connection_id"`
 	Content        string `json:"content"`
 }
 
