@@ -27,6 +27,7 @@ type ChatGptRequest struct {
 type ChatGptResponse struct {
 	Id             string `json:"id"`
 	ConversationId string `json:"conversation_id"`
+	Content        string `json:"content"`
 }
 
 type Connection struct {
