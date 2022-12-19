@@ -16,6 +16,19 @@ type Message struct {
 	Message string `json:"message"`
 }
 
+type ChatGptRequest struct {
+	Id             string `json:"id"`
+	ConversationId string `json:"conversation_id"`
+	ParentId       string `json:"parent_id"`
+	ConnectionId   string `json:"connection_id"`
+	Content        string `json:"content"`
+}
+
+type ChatGptResponse struct {
+	Id             string `json:"id"`
+	ConversationId string `json:"conversation_id"`
+}
+
 type Connection struct {
 	// The websocket connection.
 	Ws *websocket.Conn
