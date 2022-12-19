@@ -46,7 +46,7 @@ func ApiAsk(c *gin.Context) {
 		return
 	}
 	// Wait for response
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 	for {
 		// Read response
