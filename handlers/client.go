@@ -17,24 +17,39 @@ func ClientRegister(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	// Add connection to the pool
-	connection := &types.Connection{
-		Id:              utils.GenerateId(),
-		Ws:              ws,
-		Heartbeat:       time.Now().Unix(),
-		LastMessageTime: time.Now().Unix(),
-	}
-	connectionsMu.Lock()
-	connections = append(connections, connection)
-	connectionsMu.Unlock()
-	// Send connection id to the client
-	err = connection.Ws.WriteJSON(types.Message{
-		Id:      connection.Id,
+	// Generate connection id
+	id := utils.GenerateId()
+	// Send connection id
+	err = ws.WriteJSON(types.Message{
+		Id:      id,
 		Message: "Connection id",
 	})
 	if err != nil {
 		return
 	}
-	// Close the connection when it is no longer needed
+	// Wait for client to send connection id
+	for {
+		// Read message
+		var message types.Message
+		err = ws.ReadJSON(&message)
+		if err != nil {
+			return
+		}
+		// Check if the message is the connection id
+		if message.Id == id {
+			break
+		}
+	}
+	// Add connection to the pool
+	connection := &types.Connection{
+		Id:              id,
+		Ws:              ws,
+		LastMessageTime: time.Now(),
+		Heartbeat:       time.Now(),
+	}
+	connectionPool.Mu.Lock()
+	connectionPool.Connections[id] = connection
+	connectionPool.Mu.Unlock()
+
 	defer connection.Ws.Close()
 }

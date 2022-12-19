@@ -1,6 +1,11 @@
 package types
 
-import "github.com/gorilla/websocket"
+import (
+	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
+)
 
 type Message struct {
 	Id      string `json:"id"`
@@ -29,7 +34,37 @@ type Connection struct {
 	// The connecton id.
 	Id string
 	// Last heartbeat time.
-	Heartbeat int64
+	Heartbeat time.Time
 	// Last message time.
-	LastMessageTime int64
+	LastMessageTime time.Time
+}
+
+type ConnectionPool struct {
+	Connections map[string]*Connection
+	Mu          sync.RWMutex
+}
+
+func (p *ConnectionPool) Get(id string) (*Connection, bool) {
+	p.Mu.RLock()
+	defer p.Mu.RUnlock()
+	conn, ok := p.Connections[id]
+	return conn, ok
+}
+
+func (p *ConnectionPool) Set(conn *Connection) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	p.Connections[conn.Id] = conn
+}
+
+func (p *ConnectionPool) Delete(id string) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	delete(p.Connections, id)
+}
+
+func NewConnectionPool() *ConnectionPool {
+	return &ConnectionPool{
+		Connections: make(map[string]*Connection),
+	}
 }

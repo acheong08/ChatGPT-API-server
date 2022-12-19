@@ -3,8 +3,9 @@ package handlers
 import (
 	"sync"
 
-	"github.com/ChatGPT-Hackers/go-server/types"
 	"github.com/gorilla/websocket"
+
+	"github.com/ChatGPT-Hackers/go-server/types"
 )
 
 var (
@@ -13,8 +14,7 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	// Connection pool.
-	connections []*types.Connection
-	// Mutex to synchronize access to the connections slice.
-	connectionsMu sync.RWMutex
+	// Mutex to synchronize access to the connection pool.
+	connectionPoolMu sync.RWMutex
 )
+var connectionPool = types.NewConnectionPool()

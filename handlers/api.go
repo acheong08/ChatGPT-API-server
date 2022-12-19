@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"context"
+	"time"
+
 	"github.com/ChatGPT-Hackers/go-server/types"
 	"github.com/ChatGPT-Hackers/go-server/utils"
 	"github.com/gin-gonic/gin"
@@ -17,15 +20,6 @@ func ApiAsk(c *gin.Context) {
 		})
 		return
 	}
-	// Get connection with oldest last message time
-	var connection *types.Connection
-	connectionsMu.RLock()
-	for _, conn := range connections {
-		if connection == nil || conn.LastMessageTime < connection.LastMessageTime {
-			connection = conn
-		}
-	}
-	connectionsMu.RUnlock()
 	// If Id is not set, generate a new one
 	if request.Id == "" {
 		request.Id = utils.GenerateId()
@@ -34,6 +28,15 @@ func ApiAsk(c *gin.Context) {
 	if request.ParentId == "" {
 		request.ParentId = utils.GenerateId()
 	}
+	// Get connection with the lowest load
+	var connection *types.Connection
+	connectionPool.Mu.RLock()
+	for _, conn := range connectionPool.Connections {
+		if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
+			connection = conn
+		}
+	}
+	connectionPool.Mu.RUnlock()
 	// Send request to the client
 	err = connection.Ws.WriteJSON(request)
 	if err != nil {
@@ -43,6 +46,8 @@ func ApiAsk(c *gin.Context) {
 		return
 	}
 	// Wait for response
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	for {
 		// Read response
 		var response types.ChatGptResponse
@@ -59,6 +64,14 @@ func ApiAsk(c *gin.Context) {
 				"response": response,
 			})
 			return
+		}
+		select {
+		case <-ctx.Done():
+			c.JSON(504, gin.H{
+				"error": "Timed out waiting for response from the client",
+			})
+			return
+		default:
 		}
 	}
 }
