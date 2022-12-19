@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "fmt"
+	"sync"
 	"time"
 
 	// Import local packages
@@ -14,11 +14,6 @@ import (
 type Message struct {
 	Id      string `json:"id"`
 	Message string `json:"message"`
-}
-
-type User struct {
-	Id              string `json:"id"`
-	LastMessageTime int64  `json:"last_message_time"`
 }
 
 type Connection struct {
@@ -39,18 +34,19 @@ var (
 		WriteBufferSize: 1024,
 	}
 	// Connection pool.
-	connections = make(map[int]*Connection)
+	connections []*Connection
+	// Mutex to synchronize access to the connections slice.
+	connectionsMu sync.RWMutex
 )
 
 func main() {
 	router := gin.Default()
-
 	//// # Add routes
 	// Register new client connection
-	router.GET("/client/register", client_register)
+	router.GET("/client/register", clientRegister)
 }
 
-func client_register(c *gin.Context) {
+func clientRegister(c *gin.Context) {
 	// Make websocket connection
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -63,10 +59,17 @@ func client_register(c *gin.Context) {
 		Heartbeat:       time.Now().Unix(),
 		LastMessageTime: time.Now().Unix(),
 	}
-	connections[len(connections)] = connection
+	connectionsMu.Lock()
+	connections = append(connections, connection)
+	connectionsMu.Unlock()
 	// Send connection id to the client
-	connection.Ws.WriteJSON(Message{
+	err = connection.Ws.WriteJSON(Message{
 		Id:      connection.Id,
 		Message: "Connection id",
 	})
+	if err != nil {
+		return
+	}
+	// Close the connection when it is no longer needed
+	defer connection.Ws.Close()
 }
