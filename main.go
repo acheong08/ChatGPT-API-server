@@ -18,6 +18,7 @@ type Message struct {
 
 type ChatGptRequest struct {
 	Id             string `json:"id"`
+	MessageId      string `json:"message_id"`
 	ConversationId string `json:"conversation_id"`
 	ParentId       string `json:"parent_id"`
 	ConnectionId   string `json:"connection_id"`
@@ -26,6 +27,7 @@ type ChatGptRequest struct {
 
 type ChatGptResponse struct {
 	Id             string `json:"id"`
+	ResponseId     string `json:"response_id"`
 	ConversationId string `json:"conversation_id"`
 	Content        string `json:"content"`
 }
@@ -88,6 +90,33 @@ func apiAsk(c *gin.Context) {
 	// If parent id is not set, generate a new one
 	if request.ParentId == "" {
 		request.ParentId = utils.GenerateId()
+	}
+	// Send request to the client
+	err = connection.Ws.WriteJSON(request)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to send request to the client",
+		})
+		return
+	}
+	// Wait for response
+	for {
+		// Read response
+		var response ChatGptResponse
+		err = connection.Ws.ReadJSON(&response)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": "Failed to read response from the client",
+			})
+			return
+		}
+		// Check if the response is for the request
+		if response.Id == request.Id {
+			c.JSON(200, gin.H{
+				"response": response,
+			})
+			return
+		}
 	}
 }
 
