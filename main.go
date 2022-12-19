@@ -63,46 +63,32 @@ func main() {
 
 // // # API routes
 func apiAsk(c *gin.Context) {
-	// Get the message
-	var message Message
-	err := c.BindJSON(&message)
+	// Get request
+	var request ChatGptRequest
+	err := c.BindJSON(&request)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error": "Invalid message",
+			"error": "Invalid request",
 		})
 		return
 	}
-	// Find the client with the oldest last message time
-	var oldestConnection *Connection
+	// Get connection with oldest last message time
+	var connection *Connection
 	connectionsMu.RLock()
-	for _, connection := range connections {
-		if oldestConnection == nil || connection.LastMessageTime < oldestConnection.LastMessageTime {
-			oldestConnection = connection
+	for _, conn := range connections {
+		if connection == nil || conn.LastMessageTime < connection.LastMessageTime {
+			connection = conn
 		}
 	}
 	connectionsMu.RUnlock()
-	// Send the message to the client
-	err = oldestConnection.Ws.WriteJSON(message)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "Failed to send message",
-		})
-		return
+	// If Id is not set, generate a new one
+	if request.Id == "" {
+		request.Id = utils.GenerateId()
 	}
-	// Update the last message time
-	oldestConnection.LastMessageTime = time.Now().Unix()
-	// Get the response
-	_, response, err := oldestConnection.Ws.ReadMessage()
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "Failed to get response",
-		})
-		return
+	// If parent id is not set, generate a new one
+	if request.ParentId == "" {
+		request.ParentId = utils.GenerateId()
 	}
-	// Send the response
-	c.JSON(200, gin.H{
-		"response": string(response),
-	})
 }
 
 // // # Client routes
