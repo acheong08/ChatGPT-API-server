@@ -44,8 +44,54 @@ func main() {
 	//// # Add routes
 	// Register new client connection
 	router.GET("/client/register", clientRegister)
+	router.POST("/api/ask", apiAsk)
 }
 
+// // # API routes
+func apiAsk(c *gin.Context) {
+	// Get the message
+	var message Message
+	err := c.BindJSON(&message)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid message",
+		})
+		return
+	}
+	// Find the client with the oldest last message time
+	var oldestConnection *Connection
+	connectionsMu.RLock()
+	for _, connection := range connections {
+		if oldestConnection == nil || connection.LastMessageTime < oldestConnection.LastMessageTime {
+			oldestConnection = connection
+		}
+	}
+	connectionsMu.RUnlock()
+	// Send the message to the client
+	err = oldestConnection.Ws.WriteJSON(message)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to send message",
+		})
+		return
+	}
+	// Update the last message time
+	oldestConnection.LastMessageTime = time.Now().Unix()
+	// Get the response
+	_, response, err := oldestConnection.Ws.ReadMessage()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to get response",
+		})
+		return
+	}
+	// Send the response
+	c.JSON(200, gin.H{
+		"response": string(response),
+	})
+}
+
+// // # Client routes
 func clientRegister(c *gin.Context) {
 	// Make websocket connection
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
