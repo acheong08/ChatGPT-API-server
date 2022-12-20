@@ -47,9 +47,7 @@ func Client_register(c *gin.Context) {
 		LastMessageTime: time.Now(),
 		Heartbeat:       time.Now(),
 	}
-	connectionPool.Mu.Lock()
-	connectionPool.Connections[id] = connection
-	connectionPool.Mu.Unlock()
+	connectionPool.Set(connection)
 	// Debug
 	println("New connection:", connection.Id)
 }

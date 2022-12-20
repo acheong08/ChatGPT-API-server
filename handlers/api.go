@@ -63,6 +63,8 @@ func API_ask(c *gin.Context) {
 		c.JSON(500, gin.H{
 			"error": "Failed to send request to the client",
 		})
+		// Delete connection
+		connectionPool.Delete(connection.Id)
 		return
 	}
 	// Wait for response
@@ -120,9 +122,7 @@ func API_connectionPing(c *gin.Context) {
 	// Get connection id
 	id := c.Param("connection_id")
 	// Get connection
-	connectionPool.Mu.RLock()
-	connection, ok := connectionPool.Connections[id]
-	connectionPool.Mu.RUnlock()
+	connection, ok := connectionPool.Get(id)
 	// Send "ping" to the connection
 	if ok {
 		send := types.Message{
@@ -134,32 +134,43 @@ func API_connectionPing(c *gin.Context) {
 			c.JSON(500, gin.H{
 				"error": "Failed to send ping to the client",
 			})
+			// Delete connection
+			connectionPool.Delete(id)
 			return
 		}
-		// Wait for response
+		// Wait for response with a timeout
+		timeout := time.After(5 * time.Second)
 		for {
-			// Read message
-			var receive types.Message
-			err = connection.Ws.ReadJSON(&receive)
-			if err != nil {
-				return
-			}
-			// Check if the message is the connection id
-			if receive.Id == send.Id {
-				c.JSON(200, gin.H{
-					"message": receive,
-				})
-				// Heartbeat
-				connection.Heartbeat = time.Now()
-				return
-			} else {
-				// Return incorrect message
-				c.JSON(500, gin.H{
-					"error":    "Incorrect message",
-					"expected": send,
-					"received": receive,
+			select {
+			case <-timeout:
+				c.JSON(504, gin.H{
+					"error": "Timed out waiting for response from the client",
 				})
 				return
+			default:
+				// Read message
+				var receive types.Message
+				err = connection.Ws.ReadJSON(&receive)
+				if err != nil {
+					return
+				}
+				// Check if the message is the connection id
+				if receive.Id == send.Id {
+					c.JSON(200, gin.H{
+						"message": receive,
+					})
+					// Heartbeat
+					connection.Heartbeat = time.Now()
+					return
+				} else {
+					// Return incorrect message
+					c.JSON(500, gin.H{
+						"error":    "Incorrect message",
+						"expected": send,
+						"received": receive,
+					})
+					return
+				}
 			}
 		}
 	} else {
