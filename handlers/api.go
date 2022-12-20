@@ -86,6 +86,8 @@ func API_ask(c *gin.Context) {
 					"error": "Failed to read response from the client",
 					"err":   err.Error(),
 				})
+				// Delete connection
+				connectionPool.Delete(connection.Id)
 				return
 			}
 			// Check if the message is the response
@@ -102,6 +104,8 @@ func API_ask(c *gin.Context) {
 				}
 				// Send response
 				c.JSON(200, response)
+				// Heartbeat
+				connection.Heartbeat = time.Now()
 				return
 			} else {
 				// Error
