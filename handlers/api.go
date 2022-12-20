@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"time"
 
@@ -67,34 +66,38 @@ func API_ask(c *gin.Context) {
 		return
 	}
 	// Wait for response
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
 	for {
-		// Read response
-		var response types.ChatGptResponse
-		err = connection.Ws.ReadJSON(&response)
+		// Read message
+		var receive types.Message
+		err = connection.Ws.ReadJSON(&receive)
 		if err != nil {
 			c.JSON(500, gin.H{
 				"error": "Failed to read response from the client",
+				"err":   err.Error(),
 			})
 			return
 		}
-		// Check if the response is for the request
-		if response.Id == message.Id {
-			c.JSON(200, gin.H{
-				"response": response,
-			})
-			// Heartbeat
-			connection.Heartbeat = time.Now()
+		// Check if the message is the response
+		if receive.Id == message.Id {
+			// Convert response to ChatGptResponse
+			var response types.ChatGptResponse
+			err = json.Unmarshal([]byte(receive.Data), &response)
+			if err != nil {
+				c.JSON(500, gin.H{
+					"error":    "Failed to convert response to ChatGptResponse",
+					"response": receive,
+				})
+				return
+			}
+			// Send response
+			c.JSON(200, response)
 			return
-		}
-		select {
-		case <-ctx.Done():
-			c.JSON(504, gin.H{
-				"error": "Timed out waiting for response from the client",
+		} else {
+			// Error
+			c.JSON(500, gin.H{
+				"error": "Failed to find response from the client",
 			})
 			return
-		default:
 		}
 	}
 }
