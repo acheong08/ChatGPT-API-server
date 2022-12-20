@@ -45,19 +45,15 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
+	// Find connection with the lowest load and where heartbeat is after last message time
 	for _, conn := range connectionPool.Connections {
 		if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
-			connection = conn
+			if conn.Heartbeat.After(conn.LastMessageTime) {
+				connection = conn
+			}
 		}
 	}
 	connectionPool.Mu.RUnlock()
-	// Do not send request if connection currently has a request
-	if connection.LastMessageTime.After(connection.Heartbeat) {
-		c.JSON(503, gin.H{
-			"error": "No available clients",
-		})
-		return
-	}
 	// Ping before sending request
 	if !ping(connection.Id) {
 		c.JSON(503, gin.H{
@@ -72,8 +68,6 @@ func API_ask(c *gin.Context) {
 		Data: string(jsonRequest),
 	}
 	err = connection.Ws.WriteJSON(message)
-	// Set last message time
-	connection.LastMessageTime = time.Now()
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "Failed to send request to the client",
@@ -82,7 +76,8 @@ func API_ask(c *gin.Context) {
 		connectionPool.Delete(connection.Id)
 		return
 	}
-	// Wait for response
+	// Set last message time
+	connection.LastMessageTime = time.Now()
 	// Wait for response with a timeout
 	timeout := time.After(60 * time.Second)
 	for {

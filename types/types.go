@@ -18,6 +18,7 @@ type ChatGptResponse struct {
 	ResponseId     string `json:"response_id"`
 	ConversationId string `json:"conversation_id"`
 	Content        string `json:"content"`
+	Error          string `json:"error"`
 }
 
 type ChatGptRequest struct {
