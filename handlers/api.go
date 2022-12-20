@@ -68,40 +68,51 @@ func API_ask(c *gin.Context) {
 		return
 	}
 	// Wait for response
+	// Wait for response with a timeout
+	timeout := time.After(60 * time.Second)
 	for {
-		// Read message
-		var receive types.Message
-		err = connection.Ws.ReadJSON(&receive)
-		if err != nil {
-			c.JSON(500, gin.H{
-				"error": "Failed to read response from the client",
-				"err":   err.Error(),
+		select {
+		case <-timeout:
+			c.JSON(504, gin.H{
+				"error": "Timed out waiting for response from the client",
 			})
 			return
-		}
-		// Check if the message is the response
-		if receive.Id == message.Id {
-			// Convert response to ChatGptResponse
-			var response types.ChatGptResponse
-			err = json.Unmarshal([]byte(receive.Data), &response)
+		default:
+			// Read message
+			var receive types.Message
+			err = connection.Ws.ReadJSON(&receive)
 			if err != nil {
 				c.JSON(500, gin.H{
-					"error":    "Failed to convert response to ChatGptResponse",
-					"response": receive,
+					"error": "Failed to read response from the client",
+					"err":   err.Error(),
 				})
 				return
 			}
-			// Send response
-			c.JSON(200, response)
-			return
-		} else {
-			// Error
-			c.JSON(500, gin.H{
-				"error": "Failed to find response from the client",
-			})
-			return
+			// Check if the message is the response
+			if receive.Id == message.Id {
+				// Convert response to ChatGptResponse
+				var response types.ChatGptResponse
+				err = json.Unmarshal([]byte(receive.Data), &response)
+				if err != nil {
+					c.JSON(500, gin.H{
+						"error":    "Failed to convert response to ChatGptResponse",
+						"response": receive,
+					})
+					return
+				}
+				// Send response
+				c.JSON(200, response)
+				return
+			} else {
+				// Error
+				c.JSON(500, gin.H{
+					"error": "Failed to find response from the client",
+				})
+				return
+			}
 		}
 	}
+
 }
 
 func API_getConnections(c *gin.Context) {
