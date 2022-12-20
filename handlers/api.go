@@ -44,6 +44,10 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
+	// Debug
+	println("Sending request to", connection.Id)
+	println("Last message time:", connection.LastMessageTime.Format("2006-01-02 15:04:05"))
+	println("Heartbeat:", connection.Heartbeat.Format("2006-01-02 15:04:05"))
 	// Send request to the client
 	jsonRequest, err := json.Marshal(request)
 	if err != nil {
@@ -59,6 +63,8 @@ func API_ask(c *gin.Context) {
 		Data: string(jsonRequest),
 	}
 	err = connection.Ws.WriteJSON(message)
+	// Set last message time
+	connection.LastMessageTime = time.Now()
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "Failed to send request to the client",
