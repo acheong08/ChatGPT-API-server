@@ -22,7 +22,6 @@ func main() {
 	router.GET("/client/register", handlers.Client_register)
 	router.POST("/api/ask", handlers.API_ask)
 	router.GET("/api/connections", handlers.API_getConnections)
-	router.GET("/api/connections/:connection_id/ping", handlers.API_connectionPing)
 
 	// Start server
 	router.Run(":8080")

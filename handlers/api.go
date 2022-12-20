@@ -28,9 +28,23 @@ func API_ask(c *gin.Context) {
 	if request.ParentId == "" {
 		request.ParentId = utils.GenerateId()
 	}
+	jsonRequest, err := json.Marshal(request)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to convert request to json",
+		})
+		return
+	}
 	// Get connection with the lowest load
 	var connection *types.Connection
 	connectionPool.Mu.RLock()
+	// Check number of connections
+	if len(connectionPool.Connections) == 0 {
+		c.JSON(503, gin.H{
+			"error": "No available clients",
+		})
+		return
+	}
 	for _, conn := range connectionPool.Connections {
 		if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
 			connection = conn
@@ -44,15 +58,10 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
-	// Debug
-	println("Sending request to", connection.Id)
-	println("Last message time:", connection.LastMessageTime.Format("2006-01-02 15:04:05"))
-	println("Heartbeat:", connection.Heartbeat.Format("2006-01-02 15:04:05"))
-	// Send request to the client
-	jsonRequest, err := json.Marshal(request)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "Failed to convert request to json",
+	// Ping before sending request
+	if !ping(connection.Id) {
+		c.JSON(503, gin.H{
+			"error": "Ping failed",
 		})
 		return
 	}
@@ -139,11 +148,9 @@ func API_getConnections(c *gin.Context) {
 	})
 }
 
-func API_connectionPing(c *gin.Context) {
-	// Get connection id
-	id := c.Param("connection_id")
+func ping(connection_id string) bool {
 	// Get connection
-	connection, ok := connectionPool.Get(id)
+	connection, ok := connectionPool.Get(connection_id)
 	// Send "ping" to the connection
 	if ok {
 		send := types.Message{
@@ -152,52 +159,31 @@ func API_connectionPing(c *gin.Context) {
 		}
 		err := connection.Ws.WriteJSON(send)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error": "Failed to send ping to the client",
-			})
 			// Delete connection
-			connectionPool.Delete(id)
-			return
+			connectionPool.Delete(connection_id)
+			return false
 		}
 		// Wait for response with a timeout
 		timeout := time.After(5 * time.Second)
 		for {
 			select {
 			case <-timeout:
-				c.JSON(504, gin.H{
-					"error": "Timed out waiting for response from the client",
-				})
-				return
+				return false
 			default:
 				// Read message
 				var receive types.Message
 				err = connection.Ws.ReadJSON(&receive)
 				if err != nil {
-					return
+					// Delete connection
+					connectionPool.Delete(connection_id)
+					return false
 				}
-				// Check if the message is the connection id
+				// Check if the message is the response
 				if receive.Id == send.Id {
-					c.JSON(200, gin.H{
-						"message": receive,
-					})
-					// Heartbeat
-					connection.Heartbeat = time.Now()
-					return
-				} else {
-					// Return incorrect message
-					c.JSON(500, gin.H{
-						"error":    "Incorrect message",
-						"expected": send,
-						"received": receive,
-					})
-					return
+					return true
 				}
 			}
 		}
-	} else {
-		c.JSON(404, gin.H{
-			"error": "Connection not found",
-		})
-		return
 	}
+	return false
 }
