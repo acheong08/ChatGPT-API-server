@@ -61,6 +61,7 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
+	println("DEBUG: Sending request to client: " + connection.Id)
 	message := types.Message{
 		Id:      utils.GenerateId(),
 		Message: "ChatGptRequest",
@@ -79,52 +80,45 @@ func API_ask(c *gin.Context) {
 	// Set last message time
 	connection.LastMessageTime = time.Now()
 	// Wait for response with a timeout
-	timeout := time.After(60 * time.Second)
 	for {
-		select {
-		case <-timeout:
-			c.JSON(504, gin.H{
-				"error": "Timed out waiting for response from the client",
+		// Read message
+		var receive types.Message
+		connection.Ws.SetReadDeadline(time.Now().Add(120 * time.Second))
+		err = connection.Ws.ReadJSON(&receive)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": "Failed to read response from the client",
+				"err":   err.Error(),
 			})
+			// Delete connection
+			connectionPool.Delete(connection.Id)
 			return
-		default:
-			// Read message
-			var receive types.Message
-			err = connection.Ws.ReadJSON(&receive)
+		}
+		// Check if the message is the response
+		if receive.Id == message.Id {
+			// Convert response to ChatGptResponse
+			var response types.ChatGptResponse
+			err = json.Unmarshal([]byte(receive.Data), &response)
 			if err != nil {
 				c.JSON(500, gin.H{
-					"error": "Failed to read response from the client",
-					"err":   err.Error(),
-				})
-				// Delete connection
-				connectionPool.Delete(connection.Id)
-				return
-			}
-			// Check if the message is the response
-			if receive.Id == message.Id {
-				// Convert response to ChatGptResponse
-				var response types.ChatGptResponse
-				err = json.Unmarshal([]byte(receive.Data), &response)
-				if err != nil {
-					c.JSON(500, gin.H{
-						"error":    "Failed to convert response to ChatGptResponse",
-						"response": receive,
-					})
-					return
-				}
-				// Send response
-				c.JSON(200, response)
-				// Heartbeat
-				connection.Heartbeat = time.Now()
-				return
-			} else {
-				// Error
-				c.JSON(500, gin.H{
-					"error": "Failed to find response from the client",
+					"error":    "Failed to convert response to ChatGptResponse",
+					"response": receive,
 				})
 				return
 			}
+			// Send response
+			c.JSON(200, response)
+			// Heartbeat
+			connection.Heartbeat = time.Now()
+			return
+		} else {
+			// Error
+			c.JSON(500, gin.H{
+				"error": "Failed to find response from the client",
+			})
+			return
 		}
+
 	}
 
 }
@@ -159,24 +153,19 @@ func ping(connection_id string) bool {
 			return false
 		}
 		// Wait for response with a timeout
-		timeout := time.After(5 * time.Second)
 		for {
-			select {
-			case <-timeout:
+			// Read message
+			var receive types.Message
+			connection.Ws.SetReadDeadline(time.Now().Add(5 * time.Second))
+			err = connection.Ws.ReadJSON(&receive)
+			if err != nil {
+				// Delete connection
+				connectionPool.Delete(connection_id)
 				return false
-			default:
-				// Read message
-				var receive types.Message
-				err = connection.Ws.ReadJSON(&receive)
-				if err != nil {
-					// Delete connection
-					connectionPool.Delete(connection_id)
-					return false
-				}
-				// Check if the message is the response
-				if receive.Id == send.Id {
-					return true
-				}
+			}
+			// Check if the message is the response
+			if receive.Id == send.Id {
+				return true
 			}
 		}
 	}
