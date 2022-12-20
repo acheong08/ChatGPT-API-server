@@ -10,6 +10,7 @@ import (
 type Message struct {
 	Id      string `json:"id"`
 	Message string `json:"message"`
+	Data    string `json:"data"`
 }
 
 type ChatGptResponse struct {
@@ -20,7 +21,6 @@ type ChatGptResponse struct {
 }
 
 type ChatGptRequest struct {
-	Id             string `json:"id"`
 	MessageId      string `json:"message_id"`
 	ConversationId string `json:"conversation_id"`
 	ParentId       string `json:"parent_id"`

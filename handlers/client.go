@@ -11,7 +11,7 @@ import (
 )
 
 // // # Client routes
-func ClientRegister(c *gin.Context) {
+func Client_register(c *gin.Context) {
 	// Make websocket connection
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -50,6 +50,6 @@ func ClientRegister(c *gin.Context) {
 	connectionPool.Mu.Lock()
 	connectionPool.Connections[id] = connection
 	connectionPool.Mu.Unlock()
-
-	defer connection.Ws.Close()
+	// Debug
+	println("New connection:", connection.Id)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/ChatGPT-Hackers/go-server/types"
@@ -10,7 +11,7 @@ import (
 )
 
 // // # API routes
-func ApiAsk(c *gin.Context) {
+func API_ask(c *gin.Context) {
 	// Get request
 	var request types.ChatGptRequest
 	err := c.BindJSON(&request)
@@ -21,8 +22,8 @@ func ApiAsk(c *gin.Context) {
 		return
 	}
 	// If Id is not set, generate a new one
-	if request.Id == "" {
-		request.Id = utils.GenerateId()
+	if request.MessageId == "" {
+		request.MessageId = utils.GenerateId()
 	}
 	// If parent id is not set, generate a new one
 	if request.ParentId == "" {
@@ -45,7 +46,20 @@ func ApiAsk(c *gin.Context) {
 		return
 	}
 	// Send request to the client
-	err = connection.Ws.WriteJSON(request)
+	jsonRequest, err := json.Marshal(request)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to convert request to json",
+		})
+		return
+	}
+	message := types.Message{
+		Id:      utils.GenerateId(),
+		Message: "ChatGptRequest",
+		// Convert request to json
+		Data: string(jsonRequest),
+	}
+	err = connection.Ws.WriteJSON(message)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "Failed to send request to the client",
@@ -66,7 +80,7 @@ func ApiAsk(c *gin.Context) {
 			return
 		}
 		// Check if the response is for the request
-		if response.Id == request.Id {
+		if response.Id == message.Id {
 			c.JSON(200, gin.H{
 				"response": response,
 			})
@@ -82,5 +96,73 @@ func ApiAsk(c *gin.Context) {
 			return
 		default:
 		}
+	}
+}
+
+func API_getConnections(c *gin.Context) {
+	// Get connections
+	var connections []*types.Connection
+	connectionPool.Mu.RLock()
+	for _, connection := range connectionPool.Connections {
+		connections = append(connections, connection)
+	}
+	connectionPool.Mu.RUnlock()
+	// Send connections
+	c.JSON(200, gin.H{
+		"connections": connections,
+	})
+}
+
+func API_connectionPing(c *gin.Context) {
+	// Get connection id
+	id := c.Param("connection_id")
+	// Get connection
+	connectionPool.Mu.RLock()
+	connection, ok := connectionPool.Connections[id]
+	connectionPool.Mu.RUnlock()
+	// Send "ping" to the connection
+	if ok {
+		send := types.Message{
+			Id:      utils.GenerateId(),
+			Message: "ping",
+		}
+		err := connection.Ws.WriteJSON(send)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": "Failed to send ping to the client",
+			})
+			return
+		}
+		// Wait for response
+		for {
+			// Read message
+			var receive types.Message
+			err = connection.Ws.ReadJSON(&receive)
+			if err != nil {
+				return
+			}
+			// Check if the message is the connection id
+			if receive.Id == send.Id {
+				c.JSON(200, gin.H{
+					"message": receive,
+				})
+				// Heartbeat
+				connection.Heartbeat = time.Now()
+				return
+			} else {
+				// Return incorrect message
+				c.JSON(500, gin.H{
+					"error":    "Incorrect message",
+					"expected": send,
+					"received": receive,
+				})
+				return
+			}
+		}
+	} else {
+		c.JSON(404, gin.H{
+			"error": "Connection not found",
+		})
+		return
 	}
 }
