@@ -19,3 +19,4 @@ var (
 )
 
 var connectionPool = types.NewConnectionPool()
+var conversationPool = types.NewConversationPool()

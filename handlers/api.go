@@ -35,25 +35,49 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
-	// Get connection with the lowest load
 	var connection *types.Connection
-	connectionPool.Mu.RLock()
-	// Check number of connections
-	if len(connectionPool.Connections) == 0 {
-		c.JSON(503, gin.H{
-			"error": "No available clients",
-		})
-		return
-	}
-	// Find connection with the lowest load and where heartbeat is after last message time
-	for _, conn := range connectionPool.Connections {
-		if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
-			if conn.Heartbeat.After(conn.LastMessageTime) {
-				connection = conn
+	// Check conversation id
+	if request.ConversationId == "" {
+		// Get connection with the lowest load
+		connectionPool.Mu.RLock()
+		// Check number of connections
+		if len(connectionPool.Connections) == 0 {
+			c.JSON(503, gin.H{
+				"error": "No available clients",
+			})
+			return
+		}
+		// Find connection with the lowest load and where heartbeat is after last message time
+		for _, conn := range connectionPool.Connections {
+			if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
+				if conn.Heartbeat.After(conn.LastMessageTime) {
+					connection = conn
+				}
+			}
+		}
+		connectionPool.Mu.RUnlock()
+	} else {
+		// Check if conversation exists
+		conversation, ok := conversationPool.Get(request.ConversationId)
+		if !ok {
+			// Error
+			c.JSON(500, gin.H{
+				"error": "Conversation doesn't exists",
+			})
+		} else {
+			// Get connectionId of the conversation
+			connectionId := conversation.ConnectionId
+			// Check if connection exists
+			connection, ok = connectionPool.Get(connectionId)
+			if !ok {
+				// Error
+				c.JSON(500, gin.H{
+					"error": "Connection no longer exists",
+				})
+				return
 			}
 		}
 	}
-	connectionPool.Mu.RUnlock()
 	// Ping before sending request
 	if !ping(connection.Id) {
 		c.JSON(503, gin.H{
@@ -105,6 +129,17 @@ func API_ask(c *gin.Context) {
 					"response": receive,
 				})
 				return
+			}
+			// Add conversation to pool
+			conversation := &types.Conversation{
+				Id:           response.ConversationId,
+				ConnectionId: connection.Id,
+			}
+			conversationPool.Set(conversation)
+			// #DEBUG print all conversations
+			println("DEBUG: All conversations:")
+			for _, conversation := range conversationPool.Conversations {
+				println("DEBUG: " + conversation.Id + " " + conversation.ConnectionId)
 			}
 			// Send response
 			c.JSON(200, response)

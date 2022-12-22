@@ -68,3 +68,38 @@ func NewConnectionPool() *ConnectionPool {
 		Connections: make(map[string]*Connection),
 	}
 }
+
+type Conversation struct {
+	Id           string `json:"id"`
+	ConnectionId string `json:"connection_id"`
+}
+
+type ConversationPool struct {
+	Conversations map[string]*Conversation
+	Mu            sync.RWMutex
+}
+
+func (p *ConversationPool) Get(id string) (*Conversation, bool) {
+	p.Mu.RLock()
+	defer p.Mu.RUnlock()
+	conversation, ok := p.Conversations[id]
+	return conversation, ok
+}
+
+func (p *ConversationPool) Set(conversation *Conversation) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	p.Conversations[conversation.Id] = conversation
+}
+
+func (p *ConversationPool) Delete(id string) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	delete(p.Conversations, id)
+}
+
+func NewConversationPool() *ConversationPool {
+	return &ConversationPool{
+		Conversations: make(map[string]*Conversation),
+	}
+}
