@@ -37,16 +37,15 @@ func API_ask(c *gin.Context) {
 	}
 	var connection *types.Connection
 	// Check conversation id
+	connectionPool.Mu.RLock()
+	// Check number of connections
+	if len(connectionPool.Connections) == 0 {
+		c.JSON(503, gin.H{
+			"error": "No available clients",
+		})
+		return
+	}
 	if request.ConversationId == "" {
-		// Get connection with the lowest load
-		connectionPool.Mu.RLock()
-		// Check number of connections
-		if len(connectionPool.Connections) == 0 {
-			c.JSON(503, gin.H{
-				"error": "No available clients",
-			})
-			return
-		}
 		// Find connection with the lowest load and where heartbeat is after last message time
 		for _, conn := range connectionPool.Connections {
 			if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
@@ -55,7 +54,6 @@ func API_ask(c *gin.Context) {
 				}
 			}
 		}
-		connectionPool.Mu.RUnlock()
 	} else {
 		// Check if conversation exists
 		conversation, ok := conversationPool.Get(request.ConversationId)
@@ -78,6 +76,7 @@ func API_ask(c *gin.Context) {
 			}
 		}
 	}
+	connectionPool.Mu.RUnlock()
 	// Ping before sending request
 	if !ping(connection.Id) {
 		c.JSON(503, gin.H{
