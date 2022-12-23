@@ -1,4 +1,4 @@
-module github.com/ChatGPT-Hackers/go-server
+module github.com/ChatGPT-Hackers/ChatGPT-API-server
 
 go 1.19
 

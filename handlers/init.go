@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/ChatGPT-Hackers/go-server/types"
+	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
 	"github.com/gorilla/websocket"
 )
 

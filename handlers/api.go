@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/ChatGPT-Hackers/go-server/types"
-	"github.com/ChatGPT-Hackers/go-server/utils"
+	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
+	"github.com/ChatGPT-Hackers/ChatGPT-API-server/utils"
 	"github.com/gin-gonic/gin"
 )
 

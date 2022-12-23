@@ -4,7 +4,7 @@ import (
 
 	// Import local packages
 
-	"github.com/ChatGPT-Hackers/go-server/handlers"
+	"github.com/ChatGPT-Hackers/ChatGPT-API-server/handlers"
 
 	"github.com/gin-gonic/gin"
 )
