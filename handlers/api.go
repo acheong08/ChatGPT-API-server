@@ -84,7 +84,6 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
-	println("DEBUG: Sending request to client: " + connection.Id)
 	message := types.Message{
 		Id:      utils.GenerateId(),
 		Message: "ChatGptRequest",
@@ -135,11 +134,6 @@ func API_ask(c *gin.Context) {
 				ConnectionId: connection.Id,
 			}
 			conversationPool.Set(conversation)
-			// #DEBUG print all conversations
-			println("DEBUG: All conversations:")
-			for _, conversation := range conversationPool.Conversations {
-				println("DEBUG: " + conversation.Id + " " + conversation.ConnectionId)
-			}
 			// Send response
 			c.JSON(200, response)
 			// Heartbeat
