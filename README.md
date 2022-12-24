@@ -10,8 +10,8 @@
 2. `cd ChatGPT-API-server`
 3. `go build .`
 
-# Usgae
-`ChatGPT-API-server <port> <secret key>`
+# Usage
+`ChatGPT-API-server <port> <API key>`
 
 # Connect agents
 Take note of your IP address or domain name. This could be `localhost` or a remote IP address. The default port is `8080`
