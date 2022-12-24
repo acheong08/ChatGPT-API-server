@@ -21,6 +21,13 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
+	// Check if "Authorization" in Header
+	if c.Request.Header["Authorization"] == nil {
+		c.JSON(401, gin.H{
+			"error": "API key not provided",
+		})
+		return
+	}
 	if c.Request.Header["Authorization"][0] != os.Args[2] {
 		c.JSON(401, gin.H{
 			"error": "Invalid API key",
