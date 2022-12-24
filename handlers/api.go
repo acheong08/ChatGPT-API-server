@@ -177,8 +177,9 @@ func ping(connection_id string) bool {
 	connection, ok := connectionPool.Get(connection_id)
 	// Send "ping" to the connection
 	if ok {
+		id := utils.GenerateId()
 		send := types.Message{
-			Id:      utils.GenerateId(),
+			Id:      id,
 			Message: "ping",
 		}
 		err := connection.Ws.WriteJSON(send)
