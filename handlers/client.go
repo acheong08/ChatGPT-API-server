@@ -42,9 +42,10 @@ func Client_register(c *gin.Context) {
 	}
 	// Add connection to the pool
 	connection := &types.Connection{
-		Id:              id,
-		Ws:              ws,
-		LastMessageTime: time.Now(),
+		Id: id,
+		Ws: ws,
+		// Set last message time to the beginning of time
+		LastMessageTime: time.Time{},
 		Heartbeat:       time.Now(),
 	}
 	connectionPool.Set(connection)
