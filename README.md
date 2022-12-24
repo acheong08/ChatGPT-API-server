@@ -1,5 +1,4 @@
-# ChatGPT-API-server
-API server for ChatGPT
+# ChatGPT API Server
 
 # Quickstart 
 ## Setup
