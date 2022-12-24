@@ -171,6 +171,7 @@ func API_getConnections(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"connections": connections,
 	})
+	return
 }
 
 func ping(connection_id string) bool {
