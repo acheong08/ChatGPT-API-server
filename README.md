@@ -18,3 +18,8 @@
 Take note of your IP address or domain name. This could be `localhost` or a remote IP address. The default port is `8080`
 
 Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-agent). More versions in the works.
+
+# Usage
+```bash
+ $ curl "http://localhost:8080/api/ask" -X POST -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
+ ```
