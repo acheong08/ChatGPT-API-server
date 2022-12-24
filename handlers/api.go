@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"os"
 	"time"
 
 	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
@@ -11,6 +12,12 @@ import (
 
 // // # API routes
 func API_ask(c *gin.Context) {
+	if c.Request.Header.Get("Authorization") != os.Args[2] {
+		c.JSON(401, gin.H{
+			"error": "Invalid API key",
+		})
+		return
+	}
 	// Get request
 	var request types.ChatGptRequest
 	err := c.BindJSON(&request)
@@ -48,6 +55,9 @@ func API_ask(c *gin.Context) {
 	if request.ConversationId == "" {
 		// Find connection with the lowest load and where heartbeat is after last message time
 		for _, conn := range connectionPool.Connections {
+			if connection == nil {
+				connection = conn
+			}
 			if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
 				if conn.Heartbeat.After(conn.LastMessageTime) {
 					connection = conn
