@@ -54,6 +54,13 @@ func API_ask(c *gin.Context) {
 				}
 			}
 		}
+		// Check if connection was found
+		if connection == nil {
+			c.JSON(503, gin.H{
+				"error": "No available clients",
+			})
+			return
+		}
 	} else {
 		// Check if conversation exists
 		conversation, ok := conversationPool.Get(request.ConversationId)
