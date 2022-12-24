@@ -41,10 +41,14 @@ func Client_register(c *gin.Context) {
 		}
 	}
 	// Add connection to the pool
+	ptime, errr := time.Parse(time.RFC3339, "2000-01-01T00:00:00Z")
+	if errr != nil {
+		println("Error parsing time")
+	}
 	connection := &types.Connection{
 		Id:              id,
 		Ws:              ws,
-		LastMessageTime: time.Now(),
+		LastMessageTime: ptime,
 		Heartbeat:       time.Now(),
 	}
 	connectionPool.Set(connection)
