@@ -21,5 +21,5 @@ Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-age
 
 # Usage
 ```bash
- $ curl "http://localhost:8080/api/ask" -X POST -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
+ $ curl "http://localhost:8080/api/ask" -X POST --header '"Authorization": "<API_KEY>"' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
  ```
