@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"os"
 	"time"
 
 	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
@@ -17,6 +18,12 @@ func API_ask(c *gin.Context) {
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "Invalid request",
+		})
+		return
+	}
+	if c.Request.Header["Authorization"][0] != os.Args[2] {
+		c.JSON(401, gin.H{
+			"error": "Invalid API key",
 		})
 		return
 	}
