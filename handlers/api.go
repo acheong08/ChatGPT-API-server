@@ -69,6 +69,7 @@ func API_ask(c *gin.Context) {
 			c.JSON(500, gin.H{
 				"error": "Conversation doesn't exists",
 			})
+			return
 		} else {
 			// Get connectionId of the conversation
 			connectionId := conversation.ConnectionId
