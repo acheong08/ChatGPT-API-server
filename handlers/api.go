@@ -194,6 +194,9 @@ func ping(connection_id string) bool {
 			// Check if the message is the response
 			if receive.Id == send.Id {
 				return true
+			} else {
+				// Error
+				return false
 			}
 		}
 	}
