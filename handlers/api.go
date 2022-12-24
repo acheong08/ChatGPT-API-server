@@ -12,19 +12,18 @@ import (
 
 // // # API routes
 func API_ask(c *gin.Context) {
-	println(c.Request.Header.Get("Authorization"), os.Args[2])
-	if c.Request.Header["Authorization"][0] != os.Args[2] {
-		c.JSON(401, gin.H{
-			"error": "Invalid API key",
-		})
-		return
-	}
 	// Get request
 	var request types.ChatGptRequest
 	err := c.BindJSON(&request)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "Invalid request",
+		})
+		return
+	}
+	if c.Request.Header["Authorization"][0] != os.Args[2] {
+		c.JSON(401, gin.H{
+			"error": "Invalid API key",
 		})
 		return
 	}
@@ -56,14 +55,18 @@ func API_ask(c *gin.Context) {
 	if request.ConversationId == "" {
 		// Find connection with the lowest load and where heartbeat is after last message time
 		for _, conn := range connectionPool.Connections {
-			if connection == nil {
-				connection = conn
-			}
 			if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
 				if conn.Heartbeat.After(conn.LastMessageTime) {
 					connection = conn
 				}
 			}
+		}
+		// Check if connection was found
+		if connection == nil {
+			c.JSON(503, gin.H{
+				"error": "No available clients",
+			})
+			return
 		}
 	} else {
 		// Check if conversation exists
@@ -73,6 +76,7 @@ func API_ask(c *gin.Context) {
 			c.JSON(500, gin.H{
 				"error": "Conversation doesn't exists",
 			})
+			return
 		} else {
 			// Get connectionId of the conversation
 			connectionId := conversation.ConnectionId
@@ -174,6 +178,7 @@ func API_getConnections(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"connections": connections,
 	})
+	return
 }
 
 func ping(connection_id string) bool {
@@ -181,8 +186,9 @@ func ping(connection_id string) bool {
 	connection, ok := connectionPool.Get(connection_id)
 	// Send "ping" to the connection
 	if ok {
+		id := utils.GenerateId()
 		send := types.Message{
-			Id:      utils.GenerateId(),
+			Id:      id,
 			Message: "ping",
 		}
 		err := connection.Ws.WriteJSON(send)
@@ -205,6 +211,9 @@ func ping(connection_id string) bool {
 			// Check if the message is the response
 			if receive.Id == send.Id {
 				return true
+			} else {
+				// Error
+				return false
 			}
 		}
 	}
