@@ -12,6 +12,7 @@ import (
 
 // // # API routes
 func API_ask(c *gin.Context) {
+	println(c.Request.Header.Get("Authorization"), os.Args[2])
 	if c.Request.Header.Get("Authorization") != os.Args[2] {
 		c.JSON(401, gin.H{
 			"error": "Invalid API key",

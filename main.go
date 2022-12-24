@@ -13,12 +13,11 @@ import (
 
 func main() {
 	// get arg server port and secret key
-
 	if len(os.Args) < 3 {
 		println("Usage: ./ChatGPT-API-server <port> <secret key>")
 		return
 	}
-
+	println(os.Args[1], os.Args[2])
 	router := gin.Default()
 
 	//// # Headers
