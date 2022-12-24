@@ -1,5 +1,9 @@
+name: Release Go Binaries
 
-
+on: 
+  release:
+    types: [created]
+  workflow_dispatch:
 env:
   CMD_PATH: ./
 
@@ -30,7 +34,7 @@ jobs:
 
     - uses: wangyoucao577/go-release-action@v1.16
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.ACTIONS_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         project_path: "${{ env.CMD_PATH }}"
