@@ -8,7 +8,7 @@
 # Build
 1. `git clone https://github.com/ChatGPT-Hackers/ChatGPT-API-server/`
 2. `cd ChatGPT-API-server`
-3. `go build .`
+3. `go install .`
 
 # Usage
 `ChatGPT-API-server <port> <API key>`
