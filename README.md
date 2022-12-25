@@ -35,7 +35,7 @@ services:
     build: .
     ports:
       - "8080:8080"
-    command: ["ChatGPT-API-server", "8180", "<api-key>"]
+    command: ["ChatGPT-API-server", "8080", "<api-key>"]
  ```
 
 then run:
