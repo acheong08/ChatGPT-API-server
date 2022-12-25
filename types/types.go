@@ -48,6 +48,9 @@ func (p *ConnectionPool) Get(id string) (*Connection, bool) {
 	p.Mu.RLock()
 	defer p.Mu.RUnlock()
 	conn, ok := p.Connections[id]
+	if conn == nil {
+		ok = false
+	}
 	return conn, ok
 }
 

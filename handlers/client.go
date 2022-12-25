@@ -38,6 +38,18 @@ func Client_register(c *gin.Context) {
 		// Check if the message is the connection id
 		if message.Id == id {
 			break
+		} else {
+			// This is probably a reconnect
+			// Check if the connection id is in the pool
+			connection, ok := connectionPool.Get(message.Id)
+			if ok {
+				// Close the old connection
+				connection.Ws.Close()
+				// Remove the connection from the pool
+				connectionPool.Delete(message.Id)
+			}
+			id = message.Id
+			break
 		}
 	}
 	// Add connection to the pool
