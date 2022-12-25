@@ -22,3 +22,22 @@ Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-age
 ```bash
  $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <API_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
  ```
+
+# Docker
+
+open `docker-compose.yml` and add your own custom api-key in `<api-key>` section
+
+ ```yaml
+version: "3"
+
+services:
+  chatgpt-api-server:
+    build: .
+    ports:
+      - "8080:8080"
+    command: ["ChatGPT-API-server", "8180", "<api-key>"]
+ ```
+
+then run:
+
+`docker-compose up` or `docker-compose up -d` (if you want a persistent instance)
