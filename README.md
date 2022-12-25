@@ -11,7 +11,9 @@
 3. `go install .`
 
 # Usage
-`ChatGPT-API-server <port> <API key>`
+`ChatGPT-API-server <port> <SECRET_KEY>`
+
+The secret key can be anything you want. It's just for authenticating your users
 
 # Connect agents
 Take note of your IP address or domain name. This could be `localhost` or a remote IP address. The default port is `8080`
@@ -20,7 +22,7 @@ Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-age
 
 # Usage
 ```bash
- $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <API_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
+ $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <SECRET_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
  ```
 
 # Docker
