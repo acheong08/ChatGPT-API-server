@@ -4,6 +4,8 @@ import (
 
 	// Import local packages
 
+	"net/http"
+
 	"os"
 
 	"github.com/ChatGPT-Hackers/ChatGPT-API-server/handlers"
@@ -30,6 +32,11 @@ func main() {
 	router.GET("/client/register", handlers.Client_register)
 	router.POST("/api/ask", handlers.API_ask)
 	router.GET("/api/connections", handlers.API_getConnections)
+
+	// Add a health endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
 
 	// Start server
 	router.Run(":" + os.Args[1])
