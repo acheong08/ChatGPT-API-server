@@ -8,6 +8,11 @@ services:
     command: ["ChatGPT-API-server", "8080", "<API_KEY>", "-listen", "0.0.0.0"]
     networks:
       - chatgpt-api-server_default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   chatgpt-api-server_default:
