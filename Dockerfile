@@ -10,3 +10,5 @@ RUN go install .
 
 FROM alpine:latest
 COPY --from=build /go/bin/ChatGPT-API-server /usr/local/bin/
+
+RUN apk add --no-cache curl
