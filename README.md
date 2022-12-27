@@ -55,6 +55,9 @@ N/A. Used for websocket
 #### /api/ask
 
 Headers: `Authorization: <USER_TOKEN>`
+
+_The user token can be set by the admin via /admin/users/add. You can also use the admin key as the token. Both work by default_
+
 Data:
 
 ```json
