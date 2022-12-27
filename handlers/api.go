@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"os"
 	"time"
 
 	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
@@ -28,7 +27,15 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
-	if c.Request.Header["Authorization"][0] != os.Args[2] {
+	// Check if API key is valid
+	verified, err := utils.VerifyToken(c.Request.Header["Authorization"][0])
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to verify API key",
+		})
+		return
+	}
+	if !verified {
 		c.JSON(401, gin.H{
 			"error": "Invalid API key",
 		})
@@ -185,7 +192,6 @@ func API_getConnections(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"connections": connections,
 	})
-	return
 }
 
 func ping(connection_id string) bool {
