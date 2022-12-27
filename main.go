@@ -42,6 +42,7 @@ func main() {
 	router.POST("/api/ask", handlers.API_ask)
 	router.GET("/api/connections", handlers.API_getConnections)
 	router.POST("/admin/users/add", handlers.Admin_userAdd)
+	router.POST("/admin/users/delete", handlers.Admin_userDel)
 	router.GET("/admin/users", handlers.Admin_usersGet)
 
 	// Add a health endpoint
