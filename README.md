@@ -11,9 +11,9 @@
 3. `go install .`
 
 # Usage
-`ChatGPT-API-server <port> <SECRET_KEY>`
+`ChatGPT-API-server <port> <ADMIN_KEY>`
 
-The secret key can be anything you want. It's just for authenticating your users
+The admin key can be anything you want. It's just for authenticating yourself.
 
 # Connect agents
 Take note of your IP address or domain name. This could be `localhost` or a remote IP address. The default port is `8080`
@@ -21,9 +21,63 @@ Take note of your IP address or domain name. This could be `localhost` or a remo
 Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-agent). More versions in the works.
 
 # Usage
+
+## Quickstart 
+(After connecting agents)
 ```bash
  $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <SECRET_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
  ```
+## Routes
+```go
+	router.GET("/client/register", handlers.Client_register) // Used by agent
+	router.POST("/api/ask", handlers.API_ask) // For making ChatGPT requests
+	router.GET("/api/connections", handlers.API_getConnections) // For debugging
+	router.POST("/admin/users/add", handlers.Admin_userAdd) // Adds an API token
+	router.POST("/admin/users/delete", handlers.Admin_userDel) // Invalidates a token (based on user_id)
+	router.GET("/admin/users", handlers.Admin_usersGet) // Get all users
+ ```
+ ### Parameters for each route
+ #### /client/register
+ N/A. Used for websocket
+ #### /api/ask
+ Headers: `Authorization: <USER_TOKEN>`
+ Data: 
+ ```json
+ {
+  "content": "Hello world",
+  "conversation_id": "<optional>",
+  "parent_id": "<optional>"
+}
+```
+Do not enter conversation or parent id if not available.
+
+Response:
+```json
+{
+  "id": "",
+  "response_id": "<UUID>",
+  "conversation_id": "<UUID>",
+  "content": "<string>",
+  "error": ""
+}
+```
+#### /api/connections
+Headers: None
+Data: None
+Response:
+```json
+{
+  "connections": [
+    {
+      "Ws": {},
+      "Id": "<UUID>",
+      "Heartbeat": "<Time string>",
+      "LastMessageTime": "<Time string>"
+    }
+  ]
+}
+```
+
 
 # Docker
 
