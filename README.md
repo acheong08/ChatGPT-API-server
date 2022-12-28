@@ -25,6 +25,8 @@ Take note of your IP address or domain name. This could be `localhost` or a remo
 
 Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-agent). More versions in the works.
 
+There is also a [Python based client](https://github.com/ahmetkca/chatgpt-unofficial-api-docker/tree/ChatGPT-API-agent) by @ahmetkca (WIP)
+
 # Usage
 
 ## Quickstart
