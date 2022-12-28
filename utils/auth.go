@@ -9,6 +9,13 @@ import (
 )
 
 func DatabaseCreate() error {
+	// Create Data directory if it doesn't already exist
+	if _, err := os.Stat("./Data"); os.IsNotExist(err) {
+		err = os.Mkdir("./Data", 0755)
+		if err != nil {
+			return fmt.Errorf("error creating Data directory: %v", err)
+		}
+	}
 	// Open a connection to the SQLite database
 	db, err := sql.Open("sqlite3", "./Data/auth.db")
 	if err != nil {
@@ -26,13 +33,6 @@ func DatabaseCreate() error {
 }
 
 func DatabaseInsert(user_id string, token string) error {
-	// Create Data directory if it doesn't already exist
-	if _, err := os.Stat("./Data"); os.IsNotExist(err) {
-		err = os.Mkdir("./Data", 0755)
-		if err != nil {
-			return fmt.Errorf("error creating Data directory: %v", err)
-		}
-	}
 	// Open a connection to the SQLite database
 	db, err := sql.Open("sqlite3", "./Data/auth.db")
 	if err != nil {
