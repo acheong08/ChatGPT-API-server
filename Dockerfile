@@ -1,6 +1,7 @@
 FROM golang:1.19-alpine AS build
 
 RUN apk add --no-cache git
+RUN apk add gcc build-base
 
 RUN mkdir -p /go/src/ChatGPT-API-server
 WORKDIR /go/src/ChatGPT-API-server
