@@ -15,7 +15,7 @@
 
 # Usage
 
-`ChatGPT-API-server <port> <ADMIN_KEY>`
+`ChatGPT-API-server <port> <API_KEY>`
 
 The admin key can be anything you want. It's just for authenticating yourself.
 
@@ -34,7 +34,7 @@ There is also a [Python based client](https://github.com/ahmetkca/chatgpt-unoffi
 (After connecting agents)
 
 ```bash
- $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <SECRET_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
+ $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <API_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
 ```
 
 ## Routes
@@ -50,15 +50,15 @@ There is also a [Python based client](https://github.com/ahmetkca/chatgpt-unoffi
 
 ### Parameters for each route
 
-#### /client/register
+#### /client/register (GET)
 
 N/A. Used for websocket
 
-#### /api/ask
+#### /api/ask (POST)
 
 Headers: `Authorization: <USER_TOKEN>`
 
-_The user token can be set by the admin via /admin/users/add. You can also use the admin key as the token. Both work by default_
+_The user token can be set by the admin via /admin/users/add. You can also use the api key as the token. Both work by default_
 
 Data:
 
@@ -84,7 +84,7 @@ Response:
 }
 ```
 
-#### /api/connections
+#### /api/connections (GET)
 
 Headers: None
 
@@ -105,7 +105,7 @@ Response:
 }
 ```
 
-#### /admin/users/add
+#### /admin/users/add (POST)
 
 Headers: None
 
@@ -126,7 +126,7 @@ Response:
 }
 ```
 
-#### /admin/users/delete
+#### /admin/users/delete (POST)
 
 Headers: None
 
@@ -145,7 +145,7 @@ Response:
 { "message": "User deleted" }
 ```
 
-#### /admin/users
+#### /admin/users (GET)
 
 Parameters: `?admin_key=<string>`
 
@@ -179,7 +179,7 @@ Response:
 
 # Docker
 
-open `docker-compose.yml` and add your own custom api-key in `<api-key>` section
+open `docker-compose.yml` and add your own custom api-key in `<API_KEY>` section
 
 ```yaml
 version: "3"
@@ -189,7 +189,7 @@ services:
     build: .
     ports:
       - "8080:8080"
-    command: ["ChatGPT-API-server", "8080", "<api-key>"]
+    command: ["ChatGPT-API-server", "8080", "<API_KEY>", "-listen", "0.0.0.0"]
 ```
 
 then run:
