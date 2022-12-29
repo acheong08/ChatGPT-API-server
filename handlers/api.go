@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
@@ -75,6 +74,7 @@ func API_ask(c *gin.Context) {
 			// Find connection with the lowest load and where heartbeat is after last message time
 			connectionPool.Mu.RLock()
 			for _, conn := range connectionPool.Connections {
+				println(conn.Id)
 				if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
 					if conn.Heartbeat.After(conn.LastMessageTime) {
 						connection = conn
@@ -90,23 +90,20 @@ func API_ask(c *gin.Context) {
 				return
 			}
 			// Ping before sending request
-			if !ping(connection.Id) {
+			println(connection.Id)
+			var pingSucceeded bool = ping(connection.Id)
+			if !pingSucceeded {
 				// Ping failed. Try again
 				connectionPool.Delete(connection.Id)
-				connectionPool.Mu.RLock()
-				for _, conn := range connectionPool.Connections {
-					fmt.Println("Connection ID:", conn.Id)
-				}
-				connectionPool.Mu.RUnlock()
-
 				println("Ping failed")
+				succeeded = false
+				connection = nil
 				continue
 			} else {
 				println("Ping succeeded")
+				succeeded = true
+				break
 			}
-			// Ping succeeded. Break the loop
-			succeeded = true
-			break
 		}
 		if !succeeded {
 			// Delete connection
