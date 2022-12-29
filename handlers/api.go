@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/ChatGPT-Hackers/ChatGPT-API-server/types"
@@ -91,6 +92,13 @@ func API_ask(c *gin.Context) {
 			// Ping before sending request
 			if !ping(connection.Id) {
 				// Ping failed. Try again
+				connectionPool.Delete(connection.Id)
+				connectionPool.Mu.RLock()
+				for _, conn := range connectionPool.Connections {
+					fmt.Println("Connection ID:", conn.Id)
+				}
+				connectionPool.Mu.RUnlock()
+
 				println("Ping failed")
 				continue
 			} else {
@@ -101,6 +109,7 @@ func API_ask(c *gin.Context) {
 			break
 		}
 		if !succeeded {
+			// Delete connection
 			c.JSON(503, gin.H{
 				"error": "Ping failed",
 			})
@@ -232,8 +241,6 @@ func ping(connection_id string) bool {
 		err := connection.Ws.WriteJSON(send)
 		println("Sent ping")
 		if err != nil {
-			// Delete connection
-			connectionPool.Delete(connection_id)
 			return false
 		}
 		// Wait for response with a timeout
@@ -244,8 +251,6 @@ func ping(connection_id string) bool {
 			println("Received ping response")
 			if err != nil {
 				println("There was an error")
-				// Delete connection
-				connectionPool.Delete(connection_id)
 				return false
 			}
 			// Check if the message is the response
