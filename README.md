@@ -38,6 +38,7 @@ There is also a [Python based client](https://github.com/ahmetkca/chatgpt-unoffi
 ```bash
  $ curl "http://localhost:8080/api/ask" -X POST --header 'Authorization: <API_KEY>' -d '{"content": "Hello world", "conversation_id": "<optional>", "parent_id": "<optional>"}'
 ```
+Note: if you want to use `conversation_id`, you also need to use `parent_id`!
 
 ## Routes
 
@@ -73,6 +74,7 @@ Data:
 ```
 
 Do not enter conversation or parent id if not available.
+If you want to use either of these, you need to specify both! i.e. `request.parent_id=response.response_id` and `request.conversation_id=response.conversation_id`
 
 Response:
 
