@@ -66,10 +66,13 @@ func API_ask(c *gin.Context) {
 		})
 		return
 	}
+	connectionPool.Mu.RUnlock()
 	if request.ConversationId == "" {
 		// Retry 3 times before giving up
+		var succeeded bool = false
 		for i := 0; i < 3; i++ {
 			// Find connection with the lowest load and where heartbeat is after last message time
+			connectionPool.Mu.RLock()
 			for _, conn := range connectionPool.Connections {
 				if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
 					if conn.Heartbeat.After(conn.LastMessageTime) {
@@ -77,6 +80,7 @@ func API_ask(c *gin.Context) {
 					}
 				}
 			}
+			connectionPool.Mu.RUnlock()
 			// Check if connection was found
 			if connection == nil {
 				c.JSON(503, gin.H{
@@ -87,10 +91,20 @@ func API_ask(c *gin.Context) {
 			// Ping before sending request
 			if !ping(connection.Id) {
 				// Ping failed. Try again
+				println("Ping failed")
 				continue
+			} else {
+				println("Ping succeeded")
 			}
 			// Ping succeeded. Break the loop
+			succeeded = true
 			break
+		}
+		if !succeeded {
+			c.JSON(503, gin.H{
+				"error": "Ping failed",
+			})
+			return
 		}
 	} else {
 		// Check if conversation exists
@@ -122,7 +136,6 @@ func API_ask(c *gin.Context) {
 			return
 		}
 	}
-	connectionPool.Mu.RUnlock()
 	message := types.Message{
 		Id:      utils.GenerateId(),
 		Message: "ChatGptRequest",
@@ -205,6 +218,7 @@ func API_getConnections(c *gin.Context) {
 }
 
 func ping(connection_id string) bool {
+	println("Starting ping")
 	// Get connection
 	connection, ok := connectionPool.Get(connection_id)
 	// Send "ping" to the connection
@@ -214,7 +228,9 @@ func ping(connection_id string) bool {
 			Id:      id,
 			Message: "ping",
 		}
+		connection.Ws.SetReadDeadline(time.Now().Add(5 * time.Second))
 		err := connection.Ws.WriteJSON(send)
+		println("Sent ping")
 		if err != nil {
 			// Delete connection
 			connectionPool.Delete(connection_id)
@@ -224,9 +240,10 @@ func ping(connection_id string) bool {
 		for {
 			// Read message
 			var receive types.Message
-			connection.Ws.SetReadDeadline(time.Now().Add(5 * time.Second))
 			err = connection.Ws.ReadJSON(&receive)
+			println("Received ping response")
 			if err != nil {
+				println("There was an error")
 				// Delete connection
 				connectionPool.Delete(connection_id)
 				return false
