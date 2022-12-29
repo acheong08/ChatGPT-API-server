@@ -74,7 +74,6 @@ func API_ask(c *gin.Context) {
 			// Find connection with the lowest load and where heartbeat is after last message time
 			connectionPool.Mu.RLock()
 			for _, conn := range connectionPool.Connections {
-				println(conn.Id)
 				if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
 					if conn.Heartbeat.After(conn.LastMessageTime) {
 						connection = conn
@@ -90,17 +89,14 @@ func API_ask(c *gin.Context) {
 				return
 			}
 			// Ping before sending request
-			println(connection.Id)
 			var pingSucceeded bool = ping(connection.Id)
 			if !pingSucceeded {
 				// Ping failed. Try again
 				connectionPool.Delete(connection.Id)
-				println("Ping failed")
 				succeeded = false
 				connection = nil
 				continue
 			} else {
-				println("Ping succeeded")
 				succeeded = true
 				break
 			}
@@ -224,7 +220,6 @@ func API_getConnections(c *gin.Context) {
 }
 
 func ping(connection_id string) bool {
-	println("Starting ping")
 	// Get connection
 	connection, ok := connectionPool.Get(connection_id)
 	// Send "ping" to the connection
@@ -236,7 +231,6 @@ func ping(connection_id string) bool {
 		}
 		connection.Ws.SetReadDeadline(time.Now().Add(5 * time.Second))
 		err := connection.Ws.WriteJSON(send)
-		println("Sent ping")
 		if err != nil {
 			return false
 		}
@@ -245,9 +239,7 @@ func ping(connection_id string) bool {
 			// Read message
 			var receive types.Message
 			err = connection.Ws.ReadJSON(&receive)
-			println("Received ping response")
 			if err != nil {
-				println("There was an error")
 				return false
 			}
 			// Check if the message is the response
