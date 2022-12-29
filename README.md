@@ -1,11 +1,13 @@
 # ChatGPT API Server
-
+[![Release Go Binaries](https://github.com/ChatGPT-Hackers/ChatGPT-API-server/actions/workflows/release.yml/badge.svg)](https://github.com/ChatGPT-Hackers/ChatGPT-API-server/actions/workflows/release.yml)
 # Quickstart
 
 ## Setup
 
 1. Install Go
 2. `go install github.com/ChatGPT-Hackers/ChatGPT-API-server@latest`
+
+If the latest commit fails, try using one of the release binaries
 
 # Build
 
