@@ -60,10 +60,11 @@ func (p *ConnectionPool) Set(conn *Connection) {
 	p.Connections[conn.Id] = conn
 }
 
-func (p *ConnectionPool) Delete(id string) {
+func (p *ConnectionPool) Delete(id string) error {
 	p.Mu.Lock()
 	defer p.Mu.Unlock()
 	delete(p.Connections, id)
+	return nil
 }
 
 func NewConnectionPool() *ConnectionPool {
