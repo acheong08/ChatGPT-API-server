@@ -67,20 +67,30 @@ func API_ask(c *gin.Context) {
 		return
 	}
 	if request.ConversationId == "" {
-		// Find connection with the lowest load and where heartbeat is after last message time
-		for _, conn := range connectionPool.Connections {
-			if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
-				if conn.Heartbeat.After(conn.LastMessageTime) {
-					connection = conn
+		// Retry 3 times before giving up
+		for i := 0; i < 3; i++ {
+			// Find connection with the lowest load and where heartbeat is after last message time
+			for _, conn := range connectionPool.Connections {
+				if connection == nil || conn.LastMessageTime.Before(connection.LastMessageTime) {
+					if conn.Heartbeat.After(conn.LastMessageTime) {
+						connection = conn
+					}
 				}
 			}
-		}
-		// Check if connection was found
-		if connection == nil {
-			c.JSON(503, gin.H{
-				"error": "No available clients",
-			})
-			return
+			// Check if connection was found
+			if connection == nil {
+				c.JSON(503, gin.H{
+					"error": "No available clients",
+				})
+				return
+			}
+			// Ping before sending request
+			if !ping(connection.Id) {
+				// Ping failed. Try again
+				continue
+			}
+			// Ping succeeded. Break the loop
+			break
 		}
 	} else {
 		// Check if conversation exists
@@ -104,15 +114,15 @@ func API_ask(c *gin.Context) {
 				return
 			}
 		}
+		// Ping before sending request
+		if !ping(connection.Id) {
+			c.JSON(503, gin.H{
+				"error": "Ping failed",
+			})
+			return
+		}
 	}
 	connectionPool.Mu.RUnlock()
-	// Ping before sending request
-	if !ping(connection.Id) {
-		c.JSON(503, gin.H{
-			"error": "Ping failed",
-		})
-		return
-	}
 	message := types.Message{
 		Id:      utils.GenerateId(),
 		Message: "ChatGptRequest",
