@@ -25,7 +25,7 @@ func main() {
 	// Make database
 	err := utils.DatabaseCreate()
 	if err != nil {
-		println("Failed to create database")
+		println("Failed to create database:", err.Error())
 		return
 	}
 
