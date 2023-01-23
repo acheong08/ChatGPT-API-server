@@ -1,17 +1,17 @@
 # ChatGPT API Server
-[![Release Go Binaries](https://github.com/ChatGPT-Hackers/ChatGPT-API-server/actions/workflows/release.yml/badge.svg)](https://github.com/ChatGPT-Hackers/ChatGPT-API-server/actions/workflows/release.yml)
+[![Release Go Binaries](https://github.com/acheong08/ChatGPT-API-server/actions/workflows/release.yml/badge.svg)](https://github.com/acheong08/ChatGPT-API-server/actions/workflows/release.yml)
 # Quickstart
 
 ## Setup
 
 1. Install Go
-2. `go install github.com/ChatGPT-Hackers/ChatGPT-API-server@latest`
+2. `go install github.com/acheong08/ChatGPT-API-server@latest`
 
 If the latest commit fails, try using one of the release binaries
 
 # Build
 
-1. `git clone https://github.com/ChatGPT-Hackers/ChatGPT-API-server/`
+1. `git clone https://github.com/acheong08/ChatGPT-API-server/`
 2. `cd ChatGPT-API-server`
 3. `go install .`
 
@@ -25,7 +25,7 @@ The admin key can be anything you want. It's just for authenticating yourself.
 
 Take note of your IP address or domain name. This could be `localhost` or a remote IP address. The default port is `8080`
 
-Check out our [firefox agent](https://github.com/ChatGPT-Hackers/ChatGPT-API-agent). More versions in the works.
+Check out our [firefox agent](https://github.com/acheong08/ChatGPT-API-agent). More versions in the works.
 
 There is also a [Python based client](https://github.com/ahmetkca/chatgpt-unofficial-api-docker/tree/ChatGPT-API-agent) by @ahmetkca (WIP)
 
