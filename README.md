@@ -1,3 +1,5 @@
+> # Official API released by OpenAI. I will update this to become a library later today since you can just use the normal API for requests
+
 # ChatGPT API Server
 [![Release Go Binaries](https://github.com/acheong08/ChatGPT-API-server/actions/workflows/release.yml/badge.svg)](https://github.com/acheong08/ChatGPT-API-server/actions/workflows/release.yml)
 # Quickstart
